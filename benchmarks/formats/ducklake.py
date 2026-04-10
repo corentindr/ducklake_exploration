@@ -40,12 +40,17 @@ class DuckLakeAdapter(FormatAdapter):
         DUCKLAKE_DIR.mkdir(parents=True, exist_ok=True)
         DUCKLAKE_DATA.mkdir(parents=True, exist_ok=True)
 
+        # Remove stale catalog so the extension always creates a fresh one.
+        # A partial/empty catalog.db causes DuckLake to fail on DATA_PATH resolution.
+        if DUCKLAKE_CATALOG.exists():
+            DUCKLAKE_CATALOG.unlink()
+
         self.con = duckdb.connect()
         self._load_extension()
 
         attach_sql = (
             f"ATTACH 'ducklake:sqlite:{DUCKLAKE_CATALOG}' AS lake "
-            f"(TYPE DUCKLAKE, DATA_PATH '{DUCKLAKE_DATA}')"
+            f"(DATA_PATH '{DUCKLAKE_DATA}')"
         )
         self.con.execute(attach_sql)
 
@@ -129,14 +134,27 @@ class DuckLakeAdapter(FormatAdapter):
         return QueryResult(rows=0, elapsed_ms=(time.perf_counter() - t0) * 1000)
 
     def merge_new_orders_batch(self) -> QueryResult:
-        # Load the merge batch as a temporary view so MERGE can reference it
         self.con.execute(f"""
             CREATE OR REPLACE TEMP VIEW merge_source AS
             SELECT * FROM read_parquet('{MERGE_BATCH_PARQUET}')
         """)
         sql = """
-            INSERT OR REPLACE INTO lake.orders
-            SELECT * FROM merge_source
+            MERGE INTO lake.orders AS tgt
+            USING merge_source AS src
+            ON tgt.order_id = src.order_id
+            WHEN MATCHED THEN
+                UPDATE SET
+                    customer_id = src.customer_id, product_id  = src.product_id,
+                    order_date  = src.order_date,  amount      = src.amount,
+                    status      = src.status,      region      = src.region,
+                    quantity    = src.quantity,    discount    = src.discount,
+                    created_at  = src.created_at
+            WHEN NOT MATCHED THEN
+                INSERT (order_id, customer_id, product_id, order_date, amount,
+                        status, region, quantity, discount, created_at)
+                VALUES (src.order_id, src.customer_id, src.product_id, src.order_date,
+                        src.amount, src.status, src.region, src.quantity,
+                        src.discount, src.created_at)
         """
         t0 = time.perf_counter()
         self.con.execute(sql)
@@ -148,7 +166,7 @@ class DuckLakeAdapter(FormatAdapter):
     # -------------------------------------------------------------------------
 
     def add_column(self, table: str, column_name: str, column_type: str) -> QueryResult:
-        sql = f"ALTER TABLE lake.{table} ADD COLUMN {column_name} {column_type}"
+        sql = f"ALTER TABLE lake.{table} ADD COLUMN IF NOT EXISTS {column_name} {column_type}"
         t0 = time.perf_counter()
         self.con.execute(sql)
         return QueryResult(rows=0, elapsed_ms=(time.perf_counter() - t0) * 1000)
@@ -172,5 +190,5 @@ class DuckLakeAdapter(FormatAdapter):
         try:
             self.con.execute("LOAD ducklake")
         except Exception:
-            self.con.execute("INSTALL ducklake FROM community")
+            self.con.execute("INSTALL ducklake")
             self.con.execute("LOAD ducklake")

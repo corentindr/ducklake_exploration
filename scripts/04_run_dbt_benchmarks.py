@@ -75,7 +75,6 @@ def _timed_dbt_run(fmt: str, run_id: int, env: dict) -> list[dict]:
         "--profiles-dir", str(DBT_PROJECT_DIR),
         "--project-dir", str(DBT_PROJECT_DIR),
         "--log-format", "json",
-        "--quiet",
     ]
 
     t0 = time.perf_counter()
@@ -87,18 +86,18 @@ def _timed_dbt_run(fmt: str, run_id: int, env: dict) -> list[dict]:
     rows = []
     ts = datetime.now(timezone.utc).isoformat()
 
-    # Parse per-model timings from dbt's JSON log lines
+    # dbt 1.9+ writes JSON log events to stderr; stdout may be empty.
+    # Parse per-model timings from LogModelResult events (code Q012).
     model_times: dict[str, float] = {}
-    for line in proc.stdout.splitlines():
+    for line in (proc.stdout + proc.stderr).splitlines():
         try:
             event = json.loads(line)
             data = event.get("data", {})
-            # dbt JSON log: NodeFinished events carry execution_time
-            if event.get("code") == "Q027" or "execution_time" in data:
-                node_name = data.get("node_info", {}).get("node_name", "")
-                exec_time = data.get("execution_time", 0)
+            if "execution_time" in data and "node_info" in data:
+                node_name = data["node_info"].get("node_name", "")
+                exec_time = data["execution_time"]
                 if node_name:
-                    model_times[node_name] = exec_time * 1000  # convert s → ms
+                    model_times[node_name] = exec_time * 1000  # s → ms
         except (json.JSONDecodeError, KeyError):
             continue
 

@@ -79,7 +79,7 @@ def _gen_orders(out: Path) -> None:
                 ROUND((random() * 0.5)::DOUBLE, 2)             AS discount,
                 (TIMESTAMPTZ '2020-01-01' + (random() * 126230400)::INT * INTERVAL '1' SECOND)
                                                                 AS created_at
-            FROM generate_series(0, {N_ORDERS - 1})
+            FROM generate_series(0, {N_ORDERS - 1}) AS t(range)
         ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD, ROW_GROUP_SIZE 500000)
     """)
     con.close()
@@ -106,7 +106,7 @@ def _gen_customers(out: Path) -> None:
                     WHEN 2 THEN 'gold'
                     ELSE       'platinum'
                 END                                             AS tier
-            FROM generate_series(0, {N_CUSTOMERS - 1})
+            FROM generate_series(0, {N_CUSTOMERS - 1}) AS t(range)
         ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)
     """)
     con.close()
@@ -128,7 +128,7 @@ def _gen_products(out: Path) -> None:
                 ROUND((random() * 499.99 + 0.01)::DOUBLE, 2)  AS price,
                 (random() * 999 + 1)::BIGINT                   AS supplier_id,
                 ROUND((random() * 10 + 0.1)::DOUBLE, 3)       AS weight_kg
-            FROM generate_series(0, {N_PRODUCTS - 1})
+            FROM generate_series(0, {N_PRODUCTS - 1}) AS t(range)
         ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)
     """)
     con.close()
@@ -157,7 +157,7 @@ def _gen_merge_batch(out: Path) -> None:
                     1::INT                                      AS quantity,
                     0.0::DOUBLE                                 AS discount,
                     NOW()                                       AS created_at
-                FROM generate_series(0, 399999)
+                FROM generate_series(0, 399999) AS t(range)
                 UNION ALL
                 -- brand-new orders (20%)
                 SELECT
@@ -171,7 +171,7 @@ def _gen_merge_batch(out: Path) -> None:
                     2::INT                                      AS quantity,
                     0.1::DOUBLE                                 AS discount,
                     NOW()                                       AS created_at
-                FROM generate_series(0, 99999)
+                FROM generate_series(0, 99999) AS t(range)
             )
         ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)
     """)
@@ -189,8 +189,7 @@ def _print_stats() -> None:
         if not path.exists():
             continue
         row = con.execute(
-            f"SELECT COUNT(*), pg_size_pretty(SUM(file_size)) "
-            f"FROM parquet_metadata('{path}')"
+            f"SELECT COUNT(*) FROM read_parquet('{path}')"
         ).fetchone()
         size_mb = path.stat().st_size / 1_048_576
         console.print(

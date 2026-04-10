@@ -1,0 +1,136 @@
+format,category,query_name,description,run_id,elapsed_ms,rows,timestamp
+ducklake,reads,full_table_scan,COUNT(*) full table scan,1,5.742958004702814,1,2026-04-10T12:35:49.130499+00:00
+ducklake,reads,full_table_scan,COUNT(*) full table scan,2,4.306292001274414,1,2026-04-10T12:35:49.134817+00:00
+ducklake,reads,full_table_scan,COUNT(*) full table scan,3,3.8120000026538037,1,2026-04-10T12:35:49.138636+00:00
+ducklake,reads,filtered_date_region,Filter by year + region (predicate pushdown),1,1981.6408330007107,1251666,2026-04-10T12:35:53.236274+00:00
+ducklake,reads,filtered_date_region,Filter by year + region (predicate pushdown),2,2064.254749995598,1251666,2026-04-10T12:35:55.300559+00:00
+ducklake,reads,filtered_date_region,Filter by year + region (predicate pushdown),3,1979.9400830015657,1251666,2026-04-10T12:35:57.280528+00:00
+ducklake,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",1,963.0232919953414,5015596,2026-04-10T12:35:59.217798+00:00
+ducklake,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",2,1019.0629999997327,5015596,2026-04-10T12:36:00.236885+00:00
+ducklake,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",3,921.0904169958667,5015596,2026-04-10T12:36:01.158003+00:00
+ducklake,reads,point_lookup,Single-row lookup by primary key,1,14.469834000919946,1,2026-04-10T12:36:01.188315+00:00
+ducklake,reads,point_lookup,Single-row lookup by primary key,2,16.185583001060877,1,2026-04-10T12:36:01.204512+00:00
+ducklake,reads,point_lookup,Single-row lookup by primary key,3,15.712874999735504,1,2026-04-10T12:36:01.220237+00:00
+ducklake,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,1,235.257874999661,148716,2026-04-10T12:36:01.714642+00:00
+ducklake,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,2,253.09974999981932,148716,2026-04-10T12:36:01.967759+00:00
+ducklake,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,3,246.99212500127032,148716,2026-04-10T12:36:02.214769+00:00
+ducklake,aggregations,revenue_by_region_month,Revenue grouped by region × month,1,192.63366700033657,240,2026-04-10T12:36:02.603512+00:00
+ducklake,aggregations,revenue_by_region_month,Revenue grouped by region × month,2,190.6347080002888,240,2026-04-10T12:36:02.794162+00:00
+ducklake,aggregations,revenue_by_region_month,Revenue grouped by region × month,3,190.67016700137174,240,2026-04-10T12:36:02.984853+00:00
+ducklake,aggregations,customer_ltv,Customer LTV joined with customers dim,1,838.2546249995357,40,2026-04-10T12:36:04.620311+00:00
+ducklake,aggregations,customer_ltv,Customer LTV joined with customers dim,2,779.4623340014368,40,2026-04-10T12:36:05.399793+00:00
+ducklake,aggregations,customer_ltv,Customer LTV joined with customers dim,3,792.0570409987704,40,2026-04-10T12:36:06.191869+00:00
+ducklake,aggregations,top_product_categories,Top categories joined with products dim,1,143.7541670020437,8,2026-04-10T12:36:06.480345+00:00
+ducklake,aggregations,top_product_categories,Top categories joined with products dim,2,144.51933300006203,8,2026-04-10T12:36:06.624880+00:00
+ducklake,aggregations,top_product_categories,Top categories joined with products dim,3,145.7120830018539,8,2026-04-10T12:36:06.770609+00:00
+ducklake,aggregations,running_revenue_window,Cumulative revenue window function,1,180.04670799564337,240,2026-04-10T12:36:07.131934+00:00
+ducklake,aggregations,running_revenue_window,Cumulative revenue window function,2,182.83208399952855,240,2026-04-10T12:36:07.314782+00:00
+ducklake,aggregations,running_revenue_window,Cumulative revenue window function,3,183.67491700337268,240,2026-04-10T12:36:07.498472+00:00
+ducklake,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,1,318.67008400149643,100,2026-04-10T12:36:08.123235+00:00
+ducklake,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,2,323.4652089959127,100,2026-04-10T12:36:08.446718+00:00
+ducklake,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,3,321.18704200547654,100,2026-04-10T12:36:08.767921+00:00
+ducklake,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),1,47.583666993887164,292820,2026-04-10T12:36:09.305756+00:00
+ducklake,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),2,48.08025000238558,292820,2026-04-10T12:36:09.403233+00:00
+ducklake,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),3,51.634292001836,292820,2026-04-10T12:36:09.504678+00:00
+ducklake,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,1,76.31416599906515,0,2026-04-10T12:36:10.557731+00:00
+ducklake,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,2,73.70900000387337,0,2026-04-10T12:36:10.631470+00:00
+ducklake,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,3,75.25883399648592,0,2026-04-10T12:36:10.706754+00:00
+ducklake,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),1,357.28916600055527,500000,2026-04-10T12:36:11.703559+00:00
+ducklake,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),2,370.32820800232,500000,2026-04-10T12:36:12.074298+00:00
+ducklake,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),3,353.3304579977994,500000,2026-04-10T12:36:12.428023+00:00
+ducklake,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,1,21.044290995632764,0,2026-04-10T12:36:12.455306+00:00
+ducklake,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,2,1.629332997254096,0,2026-04-10T12:36:12.456953+00:00
+ducklake,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,3,1.4421660016523674,0,2026-04-10T12:36:12.458407+00:00
+ducklake,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,1,78.60437499766704,5,2026-04-10T12:36:12.618687+00:00
+ducklake,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,2,77.21058300376171,5,2026-04-10T12:36:12.695916+00:00
+ducklake,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,3,78.50849999522325,5,2026-04-10T12:36:12.774439+00:00
+delta,reads,full_table_scan,COUNT(*) full table scan,1,4.122667000046931,1,2026-04-10T12:36:22.782930+00:00
+delta,reads,full_table_scan,COUNT(*) full table scan,2,3.7726669979747385,1,2026-04-10T12:36:22.786731+00:00
+delta,reads,full_table_scan,COUNT(*) full table scan,3,3.607083999668248,1,2026-04-10T12:36:22.790348+00:00
+delta,reads,filtered_date_region,Filter by year + region (predicate pushdown),1,3734.4281670011696,1251666,2026-04-10T12:36:30.410008+00:00
+delta,reads,filtered_date_region,Filter by year + region (predicate pushdown),2,3717.8728330036392,1251666,2026-04-10T12:36:34.127917+00:00
+delta,reads,filtered_date_region,Filter by year + region (predicate pushdown),3,3612.360416998854,1251666,2026-04-10T12:36:37.740313+00:00
+delta,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",1,742.2595829993952,5015596,2026-04-10T12:36:39.594892+00:00
+delta,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",2,734.1954579969752,5015596,2026-04-10T12:36:40.329116+00:00
+delta,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",3,754.557250002108,5015596,2026-04-10T12:36:41.083703+00:00
+delta,reads,point_lookup,Single-row lookup by primary key,1,13.24041599582415,1,2026-04-10T12:36:41.122963+00:00
+delta,reads,point_lookup,Single-row lookup by primary key,2,14.424582994251978,1,2026-04-10T12:36:41.137399+00:00
+delta,reads,point_lookup,Single-row lookup by primary key,3,16.768624998803716,1,2026-04-10T12:36:41.154179+00:00
+delta,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,1,287.7444170007948,148716,2026-04-10T12:36:41.819534+00:00
+delta,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,2,303.40991700359154,148716,2026-04-10T12:36:42.122962+00:00
+delta,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,3,288.72587499790825,148716,2026-04-10T12:36:42.411707+00:00
+delta,aggregations,revenue_by_region_month,Revenue grouped by region × month,1,178.86791699856985,240,2026-04-10T12:36:42.800695+00:00
+delta,aggregations,revenue_by_region_month,Revenue grouped by region × month,2,189.48516600357834,240,2026-04-10T12:36:42.990199+00:00
+delta,aggregations,revenue_by_region_month,Revenue grouped by region × month,3,181.5124169952469,240,2026-04-10T12:36:43.171726+00:00
+delta,aggregations,customer_ltv,Customer LTV joined with customers dim,1,930.4748750000726,40,2026-04-10T12:36:45.097837+00:00
+delta,aggregations,customer_ltv,Customer LTV joined with customers dim,2,925.2769169979729,40,2026-04-10T12:36:46.023137+00:00
+delta,aggregations,customer_ltv,Customer LTV joined with customers dim,3,908.5340410019853,40,2026-04-10T12:36:46.931691+00:00
+delta,aggregations,top_product_categories,Top categories joined with products dim,1,206.56500000040978,8,2026-04-10T12:36:47.423418+00:00
+delta,aggregations,top_product_categories,Top categories joined with products dim,2,212.3785419971682,8,2026-04-10T12:36:47.635813+00:00
+delta,aggregations,top_product_categories,Top categories joined with products dim,3,211.05341700604185,8,2026-04-10T12:36:47.846882+00:00
+delta,aggregations,running_revenue_window,Cumulative revenue window function,1,181.59254099737154,240,2026-04-10T12:36:48.207861+00:00
+delta,aggregations,running_revenue_window,Cumulative revenue window function,2,182.64750000525964,240,2026-04-10T12:36:48.390523+00:00
+delta,aggregations,running_revenue_window,Cumulative revenue window function,3,176.44833300437313,240,2026-04-10T12:36:48.566988+00:00
+delta,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,1,344.6262500001467,100,2026-04-10T12:36:49.244149+00:00
+delta,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,2,315.56650000129594,100,2026-04-10T12:36:49.559732+00:00
+delta,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,3,324.4058749987744,100,2026-04-10T12:36:49.884158+00:00
+delta,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),1,55.83625000144821,0,2026-04-10T12:36:58.336678+00:00
+delta,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),2,49.62316699675284,0,2026-04-10T12:36:58.387285+00:00
+delta,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),3,47.78854100004537,0,2026-04-10T12:36:58.436242+00:00
+delta,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,1,365.0313750040368,0,2026-04-10T12:37:09.174545+00:00
+delta,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,2,309.3046249996405,0,2026-04-10T12:37:09.485041+00:00
+delta,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,3,303.45495899382513,0,2026-04-10T12:37:09.789863+00:00
+delta,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),1,16622.855708003044,500000,2026-04-10T12:37:43.524862+00:00
+delta,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),2,16460.518667001452,500000,2026-04-10T12:38:00.006488+00:00
+delta,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),3,15638.14020800055,500000,2026-04-10T12:38:15.671724+00:00
+delta,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,1,2.4512079980922863,0,2026-04-10T12:38:15.701776+00:00
+delta,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,2,2.9423750020214356,0,2026-04-10T12:38:15.708192+00:00
+delta,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,3,2.5405839987797663,0,2026-04-10T12:38:15.714025+00:00
+delta,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,1,58.51849999453407,5,2026-04-10T12:38:15.978084+00:00
+delta,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,2,49.32862499845214,5,2026-04-10T12:38:16.027472+00:00
+delta,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,3,42.54850000143051,5,2026-04-10T12:38:16.070036+00:00
+iceberg,reads,full_table_scan,COUNT(*) full table scan,1,5.047582999395672,1,2026-04-10T12:38:20.762800+00:00
+iceberg,reads,full_table_scan,COUNT(*) full table scan,2,1.6564160032430664,1,2026-04-10T12:38:20.764481+00:00
+iceberg,reads,full_table_scan,COUNT(*) full table scan,3,1.5391670021926984,1,2026-04-10T12:38:20.766035+00:00
+iceberg,reads,filtered_date_region,Filter by year + region (predicate pushdown),1,5617.246458001318,1251666,2026-04-10T12:38:33.822129+00:00
+iceberg,reads,filtered_date_region,Filter by year + region (predicate pushdown),2,5296.976416997495,1251666,2026-04-10T12:38:39.119187+00:00
+iceberg,reads,filtered_date_region,Filter by year + region (predicate pushdown),3,5431.610416002513,1251666,2026-04-10T12:38:44.550900+00:00
+iceberg,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",1,1061.1452910015942,5015596,2026-04-10T12:38:47.039589+00:00
+iceberg,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",2,1032.3982080008136,5015596,2026-04-10T12:38:48.072043+00:00
+iceberg,reads,column_pruning,"Select 3 columns, filter by status (column pruning)",3,1008.6067919983179,5015596,2026-04-10T12:38:49.080705+00:00
+iceberg,reads,point_lookup,Single-row lookup by primary key,1,24.46349999809172,1,2026-04-10T12:38:49.138336+00:00
+iceberg,reads,point_lookup,Single-row lookup by primary key,2,23.50624999962747,1,2026-04-10T12:38:49.161882+00:00
+iceberg,reads,point_lookup,Single-row lookup by primary key,3,22.833957998955157,1,2026-04-10T12:38:49.184747+00:00
+iceberg,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,1,645.4343339937623,148716,2026-04-10T12:38:50.515756+00:00
+iceberg,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,2,560.5740829996648,148716,2026-04-10T12:38:51.076374+00:00
+iceberg,reads,multi_predicate_scan,Multi-predicate high-value delivered orders,3,578.8723330042558,148716,2026-04-10T12:38:51.655289+00:00
+iceberg,aggregations,revenue_by_region_month,Revenue grouped by region × month,1,231.97491699829698,240,2026-04-10T12:38:52.160871+00:00
+iceberg,aggregations,revenue_by_region_month,Revenue grouped by region × month,2,236.9072919973405,240,2026-04-10T12:38:52.397817+00:00
+iceberg,aggregations,revenue_by_region_month,Revenue grouped by region × month,3,222.67054100666428,240,2026-04-10T12:38:52.620526+00:00
+iceberg,aggregations,customer_ltv,Customer LTV joined with customers dim,1,1075.1975000021048,40,2026-04-10T12:38:55.019179+00:00
+iceberg,aggregations,customer_ltv,Customer LTV joined with customers dim,2,1084.4951670005685,40,2026-04-10T12:38:56.103733+00:00
+iceberg,aggregations,customer_ltv,Customer LTV joined with customers dim,3,1050.8146250067512,40,2026-04-10T12:38:57.154598+00:00
+iceberg,aggregations,top_product_categories,Top categories joined with products dim,1,264.4514169951435,8,2026-04-10T12:38:57.755246+00:00
+iceberg,aggregations,top_product_categories,Top categories joined with products dim,2,249.20070899679558,8,2026-04-10T12:38:58.004494+00:00
+iceberg,aggregations,top_product_categories,Top categories joined with products dim,3,267.06737500353483,8,2026-04-10T12:38:58.271605+00:00
+iceberg,aggregations,running_revenue_window,Cumulative revenue window function,1,209.8796249993029,240,2026-04-10T12:38:58.707134+00:00
+iceberg,aggregations,running_revenue_window,Cumulative revenue window function,2,215.33391699631466,240,2026-04-10T12:38:58.922505+00:00
+iceberg,aggregations,running_revenue_window,Cumulative revenue window function,3,242.71112499991432,240,2026-04-10T12:38:59.165260+00:00
+iceberg,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,1,383.8642080008867,100,2026-04-10T12:38:59.973069+00:00
+iceberg,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,2,397.2711669994169,100,2026-04-10T12:39:00.370379+00:00
+iceberg,aggregations,heavy_aggregation,GROUP BY region × status × year + P50,3,384.83991600514855,100,2026-04-10T12:39:00.755258+00:00
+iceberg,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),1,713.9955839957111,0,2026-04-10T12:39:13.152048+00:00
+iceberg,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),2,725.7872499976656,0,2026-04-10T12:39:14.408141+00:00
+iceberg,updates,update_pending_orders,UPDATE ~200K pending → processing (0.4% of table),3,721.3033340012771,0,2026-04-10T12:39:15.658648+00:00
+iceberg,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,1,852.5330840056995,0,2026-04-10T12:39:26.006058+00:00
+iceberg,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,2,677.0247499953257,0,2026-04-10T12:39:26.684252+00:00
+iceberg,updates,delete_cancelled,DELETE ~1.2M cancelled orders older than cutoff,3,700.414874998387,0,2026-04-10T12:39:27.385835+00:00
+iceberg,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),1,13605.530959001044,500000,2026-04-10T12:39:55.071173+00:00
+iceberg,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),2,14262.593332998222,500000,2026-04-10T12:40:09.410658+00:00
+iceberg,updates,merge_upsert_500k,MERGE / UPSERT 500K rows (80% updates + 20% inserts),3,14845.566625001084,500000,2026-04-10T12:40:24.334629+00:00
+iceberg,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,1,0.0,0,2026-04-10T12:40:24.342600+00:00
+iceberg,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,2,0.0,0,2026-04-10T12:40:24.343065+00:00
+iceberg,schema_evolution,add_column_boolean,ALTER TABLE ADD COLUMN is_prime_customer BOOLEAN,3,0.0,0,2026-04-10T12:40:24.343499+00:00
+iceberg,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,1,46.33358400315046,5,2026-04-10T12:40:24.508352+00:00
+iceberg,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,2,41.70370799693046,5,2026-04-10T12:40:24.550094+00:00
+iceberg,schema_evolution,query_after_add_column,GROUP BY query using new nullable column,3,43.380000002798624,5,2026-04-10T12:40:24.593510+00:00

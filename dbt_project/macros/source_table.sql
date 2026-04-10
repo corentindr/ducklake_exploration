@@ -18,17 +18,12 @@
 
   {% elif fmt == 'iceberg' %}
     {#
-      Iceberg requires the path to the latest metadata JSON.
-      We use a glob to pick the most recently modified metadata file.
-      DuckDB's iceberg_scan with allow_moved_paths handles relative paths.
+      Point iceberg_scan at the table directory — DuckDB will locate the latest
+      snapshot automatically (requires unsafe_enable_version_guessing = true,
+      set in profiles.yml for the iceberg target).
     #}
     iceberg_scan(
-      (
-        SELECT file
-        FROM   glob('{{ storage }}/iceberg/warehouse/benchmark/{{ table_name }}/metadata/*.metadata.json')
-        ORDER  BY last_modified DESC
-        LIMIT  1
-      ),
+      '{{ storage }}/iceberg/warehouse/benchmark/{{ table_name }}',
       allow_moved_paths := true
     )
 

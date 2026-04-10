@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 from pathlib import Path
 
@@ -32,6 +31,10 @@ FORMAT_COLORS = {
     "iceberg": "#10B981",    # green
 }
 
+READ_CATEGORIES = {"reads", "aggregations"}
+WRITE_CATEGORIES = {"updates"}
+META_CATEGORIES = {"schema_evolution"}
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -40,8 +43,7 @@ FORMAT_COLORS = {
 def load_results() -> pd.DataFrame | None:
     if not RESULTS_CSV.exists():
         return None
-    df = pd.read_csv(RESULTS_CSV)
-    return df
+    return pd.read_csv(RESULTS_CSV)
 
 
 @st.cache_data(ttl=30)
@@ -58,17 +60,6 @@ def avg_by(df: pd.DataFrame, *group_cols) -> pd.DataFrame:
         .reset_index()
         .rename(columns={"elapsed_ms": "avg_ms"})
     )
-
-
-def speedup_table(df: pd.DataFrame, baseline: str = "ducklake") -> pd.DataFrame:
-    """For each query, compute speedup ratio vs the baseline format."""
-    agg = avg_by(df, "category", "query_name", "format")
-    pivot = agg.pivot(index=["category", "query_name"], columns="format", values="avg_ms").reset_index()
-    if baseline not in pivot.columns:
-        return pivot
-    for col in [c for c in pivot.columns if c not in ("category", "query_name")]:
-        pivot[f"{col}_ratio"] = pivot[col] / pivot[baseline]
-    return pivot
 
 
 # ---------------------------------------------------------------------------
@@ -105,96 +96,71 @@ selected_categories = st.sidebar.multiselect("Categories", available_categories,
 filtered = df[df["format"].isin(selected_formats) & df["category"].isin(selected_categories)]
 
 # ---------------------------------------------------------------------------
-# Header KPIs
+# Header
 # ---------------------------------------------------------------------------
-st.title("🦆 DuckLake · Delta · Iceberg — Benchmark Dashboard")
-st.caption(f"Data: {len(df):,} benchmark records across {df['format'].nunique()} formats")
+st.title("🦆 DuckLake · Delta · Iceberg — Local Benchmark")
+st.caption(f"{len(df):,} benchmark records · {df['format'].nunique()} formats · 50M-row orders table")
 
-kpi_cols = st.columns(len(available_formats))
-for col, fmt in zip(kpi_cols, available_formats):
-    total_queries = df[df["format"] == fmt]["query_name"].nunique()
-    avg_total = df[df["format"] == fmt]["elapsed_ms"].mean()
-    col.metric(label=f"**{fmt}** — avg latency", value=f"{avg_total:,.1f} ms", delta=None)
+st.info(
+    "**What this benchmark measures (local setup)**\n\n"
+    "- **Reads & Aggregations** — fair comparison: all three formats are queried by the same DuckDB engine "
+    "(`delta_scan`, `iceberg_scan`, `lake.*`). Differences reflect Parquet file layout and extension overhead.\n"
+    "- **Writes / Mutations** — *not* a pure format comparison: each format uses a different write library "
+    "(DuckDB SQL for DuckLake, delta-rs Rust for Delta, pyiceberg Python for Iceberg). Results reflect library "
+    "performance as much as format design.\n"
+    "- **Schema Evolution** — metadata-only operations. Differences reflect catalog update overhead.\n\n"
+    "**What this benchmark cannot measure locally:** DuckLake's catalog efficiency advantages "
+    "(S3 LIST elimination, single-hop metadata vs Iceberg's 3-hop chain) are invisible on local disk — "
+    "those only appear in cloud object-storage scenarios."
+)
+
+st.divider()
+
+# ---------------------------------------------------------------------------
+# KPIs — split by read vs write to avoid mixing different engines
+# ---------------------------------------------------------------------------
+kpi_read, kpi_write = st.columns(2)
+
+with kpi_read:
+    st.markdown("**Avg read/aggregation latency** *(same DuckDB engine — fair comparison)*")
+    read_df = df[df["category"].isin(READ_CATEGORIES)]
+    cols = st.columns(len(available_formats))
+    for col, fmt in zip(cols, available_formats):
+        val = read_df[read_df["format"] == fmt]["elapsed_ms"].mean()
+        col.metric(label=fmt, value=f"{val:,.0f} ms" if pd.notna(val) else "n/a")
+
+with kpi_write:
+    st.markdown("**Avg write latency** *(different engines — compare with caution)*")
+    write_df = df[df["category"].isin(WRITE_CATEGORIES)]
+    cols = st.columns(len(available_formats))
+    for col, fmt in zip(cols, available_formats):
+        val = write_df[write_df["format"] == fmt]["elapsed_ms"].mean()
+        col.metric(label=fmt, value=f"{val:,.0f} ms" if pd.notna(val) else "n/a")
 
 st.divider()
 
 # ---------------------------------------------------------------------------
 # Tab layout
 # ---------------------------------------------------------------------------
-tab_overview, tab_reads, tab_aggs, tab_updates, tab_schema, tab_dbt, tab_raw = st.tabs([
-    "📊 Overview",
+tab_reads, tab_aggs, tab_updates, tab_schema, tab_dbt, tab_raw = st.tabs([
     "📖 Reads",
     "🔢 Aggregations",
-    "✏️ Updates",
+    "✏️ Writes (library comparison)",
     "🔧 Schema Evolution",
     "🧮 dbt",
     "🗂️ Raw Data",
 ])
 
 # ---------------------------------------------------------------------------
-# Overview tab
-# ---------------------------------------------------------------------------
-with tab_overview:
-    st.subheader("Average latency by category and format")
-
-    cat_agg = avg_by(filtered, "category", "format")
-    fig = px.bar(
-        cat_agg,
-        x="category",
-        y="avg_ms",
-        color="format",
-        barmode="group",
-        color_discrete_map=FORMAT_COLORS,
-        labels={"avg_ms": "Avg latency (ms)", "category": "Category", "format": "Format"},
-        height=400,
-    )
-    fig.update_layout(legend_title_text="Format")
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Query-level heatmap (avg ms)")
-
-    query_agg = avg_by(filtered, "query_name", "format")
-    pivot_heat = query_agg.pivot(index="query_name", columns="format", values="avg_ms")
-    fig_heat = px.imshow(
-        pivot_heat,
-        color_continuous_scale="RdYlGn_r",
-        text_auto=".0f",
-        aspect="auto",
-        labels={"color": "avg ms"},
-    )
-    fig_heat.update_layout(height=max(350, len(pivot_heat) * 35))
-    st.plotly_chart(fig_heat, use_container_width=True)
-
-    st.subheader("Speedup vs DuckLake (lower is better for competitors)")
-    sp = speedup_table(filtered, baseline="ducklake")
-    ratio_cols = [c for c in sp.columns if c.endswith("_ratio") and "ducklake" not in c]
-    if ratio_cols:
-        sp_melted = sp[["category", "query_name"] + ratio_cols].melt(
-            id_vars=["category", "query_name"],
-            var_name="format_ratio",
-            value_name="ratio",
-        )
-        sp_melted["format"] = sp_melted["format_ratio"].str.replace("_ratio", "")
-        fig_sp = px.scatter(
-            sp_melted,
-            x="query_name",
-            y="ratio",
-            color="format",
-            color_discrete_map=FORMAT_COLORS,
-            hover_data=["category"],
-            labels={"ratio": "Latency ratio vs DuckLake", "query_name": "Query"},
-            height=400,
-        )
-        fig_sp.add_hline(y=1.0, line_dash="dash", line_color="gray", annotation_text="DuckLake baseline")
-        fig_sp.update_xaxes(tickangle=30)
-        st.plotly_chart(fig_sp, use_container_width=True)
-        st.caption("Values > 1 mean that format is **slower** than DuckLake; < 1 means **faster**.")
-
-# ---------------------------------------------------------------------------
 # Reads tab
 # ---------------------------------------------------------------------------
 with tab_reads:
     st.subheader("Read / Scan benchmarks")
+    st.success(
+        "All three formats are scanned by **DuckDB** (`delta_scan`, `iceberg_scan`, `lake.*`). "
+        "This is the most meaningful local comparison — differences come from Parquet file layout "
+        "and DuckDB extension overhead, not catalog architecture."
+    )
     reads_df = filtered[filtered["category"] == "reads"]
     if reads_df.empty:
         st.info("No read benchmarks in selection.")
@@ -209,7 +175,12 @@ with tab_reads:
         fig.update_xaxes(tickangle=20)
         st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("**All individual runs (scatter — spread shows variability)**")
+        with st.expander("Query descriptions"):
+            for q in reads_df["query_name"].unique():
+                desc = reads_df[reads_df["query_name"] == q]["description"].iloc[0]
+                st.markdown(f"- **{q}**: {desc}")
+
+        st.markdown("**Individual runs — spread shows variability**")
         fig2 = px.strip(
             reads_df, x="query_name", y="elapsed_ms", color="format",
             color_discrete_map=FORMAT_COLORS,
@@ -223,6 +194,10 @@ with tab_reads:
 # ---------------------------------------------------------------------------
 with tab_aggs:
     st.subheader("Aggregation benchmarks")
+    st.success(
+        "Same engine for all formats (DuckDB). Differences reflect how well each format's "
+        "Parquet layout enables predicate pushdown and column pruning."
+    )
     agg_df = filtered[filtered["category"] == "aggregations"]
     if agg_df.empty:
         st.info("No aggregation benchmarks in selection.")
@@ -243,17 +218,20 @@ with tab_aggs:
                 st.markdown(f"- **{q}**: {desc}")
 
 # ---------------------------------------------------------------------------
-# Updates tab
+# Updates / Writes tab
 # ---------------------------------------------------------------------------
 with tab_updates:
-    st.subheader("Update / Delete / Merge benchmarks")
-    st.markdown(
-        """
-        This is where formats diverge most significantly:
-        - **DuckLake** — native SQL `UPDATE` / `DELETE` / `INSERT OR REPLACE`
-        - **Delta** — Rust-native `dt.update()` / `dt.delete()` / `dt.merge()` via delta-rs
-        - **Iceberg** — delete-then-append pattern via pyiceberg (no single-call UPDATE primitive)
-        """
+    st.subheader("Write / Mutation benchmarks")
+    st.warning(
+        "**Caution: this tab compares write libraries, not formats.**\n\n"
+        "Each format uses a completely different execution engine for mutations:\n\n"
+        "| Format | Write engine | UPDATE primitive |\n"
+        "|--------|-------------|------------------|\n"
+        "| **DuckLake** | Native DuckDB SQL | `UPDATE` / `DELETE` / `INSERT OR REPLACE` |\n"
+        "| **Delta** | delta-rs (Rust) | `dt.update()` / `dt.delete()` / `dt.merge()` |\n"
+        "| **Iceberg** | pyiceberg (Python) | delete-then-append (no single-call UPDATE) |\n\n"
+        "Results tell you how fast each library is locally, not how the formats would compare "
+        "on a shared compute engine in the cloud."
     )
     upd_df = filtered[filtered["category"] == "updates"]
     if upd_df.empty:
@@ -269,25 +247,18 @@ with tab_updates:
         fig.update_xaxes(tickangle=10)
         st.plotly_chart(fig, use_container_width=True)
 
-        # Highlight the MERGE operation separately
-        merge_df = upd_df[upd_df["query_name"] == "merge_upsert_500k"]
-        if not merge_df.empty:
-            st.markdown("**MERGE / UPSERT detail (500K rows)**")
-            m_agg = avg_by(merge_df, "format")
-            fig2 = px.bar(
-                m_agg, x="format", y="avg_ms", color="format",
-                color_discrete_map=FORMAT_COLORS,
-                labels={"avg_ms": "Avg latency (ms)", "format": "Format"},
-                height=300,
-            )
-            fig2.update_layout(showlegend=False)
-            st.plotly_chart(fig2, use_container_width=True)
-
 # ---------------------------------------------------------------------------
 # Schema Evolution tab
 # ---------------------------------------------------------------------------
 with tab_schema:
     st.subheader("Schema evolution benchmarks")
+    st.info(
+        "**ADD COLUMN** is a metadata-only operation for all three formats — no data files are rewritten. "
+        "Locally, this measures catalog update overhead: a SQLite write (DuckLake), "
+        "a JSON log entry (Delta), or a new metadata.json file (Iceberg). "
+        "In the cloud, DuckLake's SQL catalog would have a clear edge here due to atomic transactions "
+        "and no object-store round trips."
+    )
     se_df = filtered[filtered["category"] == "schema_evolution"]
     if se_df.empty:
         st.info("No schema evolution benchmarks in selection.")
@@ -301,17 +272,38 @@ with tab_schema:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        st.info(
-            "**ADD COLUMN** in DuckLake/Delta/Iceberg is a metadata-only operation "
-            "(no data rewrite). The elapsed time reflects catalog overhead only. "
-            "The subsequent query tests null-handling for the new column."
-        )
-
 # ---------------------------------------------------------------------------
 # dbt tab
 # ---------------------------------------------------------------------------
 with tab_dbt:
     st.subheader("dbt model run times by format")
+
+    st.success(
+        "All three formats are queried by the same DuckDB engine via dbt-duckdb — "
+        "a fair comparison, same as the Reads and Aggregations tabs. "
+        "The source macro resolves to `lake.<table>`, `delta_scan(...)`, or `iceberg_scan(...)` "
+        "depending on the active target."
+    )
+
+    st.warning(
+        "**These models are independent workloads — they are not replicas of the direct benchmarks.**\n\n"
+        "Similar names (e.g. `customer_ltv`) refer to related but different queries. "
+        "Do not compare dbt model times directly against the numbers in the Reads or Aggregations tabs."
+    )
+
+    with st.expander("What each dbt model measures", expanded=True):
+        st.markdown("""
+| Model | Materialization | What it measures | Direct benchmark equivalent |
+|---|---|---|---|
+| `stg_orders` | view | View creation overhead — no data is written | — |
+| `stg_customers` | view | View creation overhead | — |
+| `stg_products` | view | View creation overhead | — |
+| `revenue_by_region` | table | `GROUP BY region × year × month × status` on 50M rows | Similar to `revenue_by_region_month` but with 4 dimensions instead of 2 |
+| `customer_ltv` | table | Join orders × customers, group by individual customer_id → 500K rows out | Named similarly to `customer_ltv` benchmark but much heavier: 500K group keys vs 40 |
+| `product_performance` | table | Join orders × products + window `RANK` per category | Heavier than `top_product_categories` — adds per-product row-level detail and ranking |
+| `incremental_daily_revenue` | incremental (`delete+insert`) | dbt processes only new `order_date` values not yet in the target table | **Not related to the UPDATE benchmark.** The UPDATE benchmark patches `status` on existing rows. This model appends new aggregated date rows — it is a write/materialization workload, not an in-place update. |
+""")
+
     if dbt_df is None:
         st.info(
             "No dbt results yet. Run:\n\n"
@@ -351,22 +343,6 @@ with tab_dbt:
             cols = st.columns(len(total_agg))
             for col, (_, row) in zip(cols, total_agg.iterrows()):
                 col.metric(row["format"], f"{row['total_run_ms']:,.0f} ms")
-
-        st.markdown("---")
-        st.markdown("### dbt integration notes")
-        st.markdown(
-            """
-            | Format | dbt profile | Source resolution | Materialization |
-            |--------|------------|-------------------|-----------------|
-            | **DuckLake** | `ducklake` target | `lake.<table>` (attached via DuckDB) | DuckLake tables |
-            | **Delta** | `delta` target | `delta_scan('path/to/table')` | In-memory DuckDB |
-            | **Iceberg** | `iceberg` target | `iceberg_scan('metadata.json')` | In-memory DuckDB |
-
-            All three share the same dbt model SQL — only the source macro differs.
-            The `{{ get_source_table('orders') }}` macro resolves to the right expression
-            based on the `DBT_FORMAT` env var.
-            """
-        )
 
 # ---------------------------------------------------------------------------
 # Raw Data tab

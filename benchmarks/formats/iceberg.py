@@ -97,8 +97,9 @@ class IcebergAdapter(FormatAdapter):
         return self._iceberg_scan("products")
 
     def _iceberg_scan(self, table: str) -> str:
-        meta = self._get_metadata_location(table)
-        return f"iceberg_scan('{meta}', allow_moved_paths=true)"
+        # DuckDB iceberg_scan expects the table directory, not the metadata.json path.
+        table_dir = ICEBERG_WAREHOUSE / _NAMESPACE / table
+        return f"iceberg_scan('{table_dir}', allow_moved_paths=true)"
 
     # -------------------------------------------------------------------------
     # Query execution (via DuckDB iceberg_scan)
@@ -207,6 +208,9 @@ class IcebergAdapter(FormatAdapter):
         ice_type = _type_map.get(column_type.upper(), StringType())
         tbl = self._catalog.load_table(f"{_NAMESPACE}.{table}")
 
+        if column_name in {f.name for f in tbl.schema().fields}:
+            return QueryResult(rows=0, elapsed_ms=0.0)
+
         t0 = time.perf_counter()
         with tbl.update_schema() as upd:
             upd.add_column(path=column_name, field_type=ice_type, required=False)
@@ -242,10 +246,9 @@ class IcebergAdapter(FormatAdapter):
         )
 
     def _load_table(self, name: str, arrow_table: pa.Table) -> None:
-        from pyiceberg.schema import Schema
-        from pyiceberg.io.pyarrow import schema_to_pyarrow, _convert_schema_to_iceberg
+        from pyiceberg.io.pyarrow import _pyarrow_to_schema_without_ids
 
-        ice_schema = _convert_schema_to_iceberg(arrow_table.schema)
+        ice_schema = _pyarrow_to_schema_without_ids(arrow_table.schema)
         full_name = f"{_NAMESPACE}.{name}"
 
         try:
@@ -272,3 +275,5 @@ class IcebergAdapter(FormatAdapter):
         except Exception:
             self.con.execute("INSTALL iceberg")
             self.con.execute("LOAD iceberg")
+        # Required when pointing iceberg_scan at a table directory (local FS).
+        self.con.execute("SET unsafe_enable_version_guessing = true")

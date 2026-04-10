@@ -7,15 +7,13 @@ benchmark:
 
     ducklake:
       type: duckdb
-      # Write dbt output tables into the DuckLake catalog database
-      path: "{{ env_var('DUCKLAKE_CATALOG_PATH', 'storage/ducklake/catalog.db') }}"
+      path: ":memory:"
       extensions:
         - ducklake
       attach:
         - path: "ducklake:sqlite:{{ env_var('DUCKLAKE_CATALOG_PATH', 'storage/ducklake/catalog.db') }}"
           alias: lake
           options:
-            type: ducklake
             data_path: "{{ env_var('DUCKLAKE_DATA_PATH', 'storage/ducklake/data') }}"
       schema: dbt_benchmark
 
@@ -31,6 +29,8 @@ benchmark:
       path: ":memory:"
       extensions:
         - iceberg
+      settings:
+        unsafe_enable_version_guessing: true
       schema: dbt_benchmark
 
   target: ducklake
