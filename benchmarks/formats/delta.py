@@ -47,23 +47,23 @@ class DeltaAdapter(FormatAdapter):
 
         console.print("  [magenta]Delta[/magenta] loading orders…")
         orders = pq.read_table(str(ORDERS_PARQUET))
-        write_deltalake(str(DELTA_ORDERS), orders, mode="overwrite")
+        write_deltalake(str(DELTA_ORDERS), orders, mode="overwrite", schema_mode="overwrite")
         del orders
 
         console.print("  [magenta]Delta[/magenta] loading customers…")
         customers = pq.read_table(str(CUSTOMERS_PARQUET))
-        write_deltalake(str(DELTA_CUSTOMERS), customers, mode="overwrite")
+        write_deltalake(str(DELTA_CUSTOMERS), customers, mode="overwrite", schema_mode="overwrite")
         del customers
 
         console.print("  [magenta]Delta[/magenta] loading products…")
         products = pq.read_table(str(PRODUCTS_PARQUET))
-        write_deltalake(str(DELTA_PRODUCTS), products, mode="overwrite")
+        write_deltalake(str(DELTA_PRODUCTS), products, mode="overwrite", schema_mode="overwrite")
         del products
 
         # Pre-stage merge batch as a Delta table for merge_new_orders_batch
         console.print("  [magenta]Delta[/magenta] staging merge batch…")
         batch = pq.read_table(str(MERGE_BATCH_PARQUET))
-        write_deltalake(str(DELTA_ORDERS_MERGE), batch, mode="overwrite")
+        write_deltalake(str(DELTA_ORDERS_MERGE), batch, mode="overwrite", schema_mode="overwrite")
         del batch
 
         self.con = duckdb.connect()
