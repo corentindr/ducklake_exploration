@@ -1,0 +1,36 @@
+# Each target name matches --target argument in scripts/04_run_dbt_benchmarks.py.
+# All three use dbt-duckdb; they differ in how sources are resolved and
+# which DuckDB extensions are loaded.
+
+benchmark:
+  outputs:
+
+    ducklake:
+      type: duckdb
+      # Write dbt output tables into the DuckLake catalog database
+      path: "{{ env_var('DUCKLAKE_CATALOG_PATH', 'storage/ducklake/catalog.db') }}"
+      extensions:
+        - ducklake
+      attach:
+        - path: "ducklake:sqlite:{{ env_var('DUCKLAKE_CATALOG_PATH', 'storage/ducklake/catalog.db') }}"
+          alias: lake
+          options:
+            type: ducklake
+            data_path: "{{ env_var('DUCKLAKE_DATA_PATH', 'storage/ducklake/data') }}"
+      schema: dbt_benchmark
+
+    delta:
+      type: duckdb
+      path: ":memory:"
+      extensions:
+        - delta
+      schema: dbt_benchmark
+
+    iceberg:
+      type: duckdb
+      path: ":memory:"
+      extensions:
+        - iceberg
+      schema: dbt_benchmark
+
+  target: ducklake

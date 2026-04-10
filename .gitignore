@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.ruff_cache/
+
+# uv
+uv.lock
+
+# Generated data & storage (large files, not committed)
+data/*.parquet
+storage/
+!storage/.gitkeep
+
+# Benchmark results (committed for history)
+# results/  <- intentionally NOT ignored
+
+# dbt
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+dbt_project/.user.yml
+
+# Streamlit
+.streamlit/
+
+# OS
+.DS_Store
