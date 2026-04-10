@@ -1,0 +1,25 @@
+name: "ducklake_benchmark"
+version: "1.0.0"
+config-version: 2
+
+profile: "benchmark"
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+target-path: "target"
+log-path: "logs"
+packages-install-path: "dbt_packages"
+
+models:
+  ducklake_benchmark:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+
+vars:
+  # Injected via env var in scripts/04_run_dbt_benchmarks.py
+  storage_path: "{{ env_var('STORAGE_PATH', 'storage') }}"
+  ducklake_catalog: "{{ env_var('DUCKLAKE_CATALOG_PATH', 'storage/ducklake/catalog.db') }}"
+  ducklake_data: "{{ env_var('DUCKLAKE_DATA_PATH', 'storage/ducklake/data') }}"
+  format: "{{ env_var('DBT_FORMAT', 'ducklake') }}"
